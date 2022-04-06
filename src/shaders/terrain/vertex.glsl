@@ -8,8 +8,7 @@ varying float vElevation;
 vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
 vec2 fade(vec2 t) {return t*t*t*(t*(t*6.0-15.0)+10.0);}
 
-float getPerlinNoise2d(vec2 P)
-{
+float getPerlinNoise2d(vec2 P) {
   vec4 Pi = floor(P.xyxy) + vec4(0.0, 0.0, 1.0, 1.0);
   vec4 Pf = fract(P.xyxy) - vec4(0.0, 0.0, 1.0, 1.0);
   Pi = mod(Pi, 289.0); // To avoid truncation effects in permutation
@@ -46,7 +45,7 @@ float getElevation(vec2 _position) {
   float elevation = 0.0;
   vec2 position = _position;
   position.x += uTime * 0.03;
-  position.y += uTime * 0.1;
+  position.y += uTime * 0.0;
 
   elevation += getPerlinNoise2d(position * 0.3) * 0.5;
   elevation += getPerlinNoise2d(position + 123.0) * 0.2;

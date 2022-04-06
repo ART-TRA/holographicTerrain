@@ -192,7 +192,8 @@ terrain.uniforms = {
   uHslHueFrequency: {value: 20.0},
   uHslLightness: {value: 0.75},
   uHslLightnessVariation: {value: 0.25},
-  uHslLightnessFrequency: {value: 20.0}
+  uHslLightnessFrequency: {value: 20.0},
+  uHslTimeFrequency: {value: 0.03}
 }
 
 terrain.geometry = new THREE.PlaneBufferGeometry(1, 1, 1000, 1000)
@@ -377,6 +378,16 @@ const addGui = () => {
       max: 50,
       step: 0.001,
     })
+
+  gui.Register({
+        object: terrain.uniforms.uHslTimeFrequency,
+        property: 'value',
+        type: 'range',
+        label: 'uHslTimeFrequency',
+        min: 0,
+        max: 0.2,
+        step: 0.001,
+      })
 
   gui.Register({
     type: 'folder',
