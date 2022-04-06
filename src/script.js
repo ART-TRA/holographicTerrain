@@ -150,7 +150,7 @@ terrain.texture.instance.magFilter = THREE.NearestFilter //уменьшение 
 
 terrain.texture.update = () => {
   terrain.texture.context.clearRect(0, 0, terrain.texture.width, terrain.texture.height)
-  terrain.texture.context.fillStyle = '#ffffff'
+  terrain.texture.context.fillStyle = '#00ffff'
 
   //Strong line
   terrain.texture.context.globalAlpha = 1.0
@@ -167,6 +167,7 @@ terrain.texture.update = () => {
   const actualThinLineWidth = Math.round(terrain.texture.height * terrain.texture.thinLineWidth)
   for (let i = 0; i < thinLinesCount; ++i) {
     terrain.texture.context.globalAlpha = terrain.texture.thinLineAlpha
+    terrain.texture.context.fillStyle = '#ffffff'
     terrain.texture.context.fillRect(
       0,
       actualStrongLineWidth + Math.round((terrain.texture.height - actualStrongLineWidth) / terrain.texture.linesCount) * (i + 1),
