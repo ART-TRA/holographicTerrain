@@ -128,7 +128,7 @@ terrain.texture = {}
 terrain.texture.linesCount = 5
 terrain.texture.width = 32
 terrain.texture.height = 128
-terrain.texture.strongLineWidth = 0.04
+terrain.texture.strongLineWidth = 0.08
 terrain.texture.thinLineWidth = 0.01
 terrain.texture.thinLineAlpha = 0.5
 terrain.texture.canvas = document.createElement('canvas')
@@ -186,7 +186,13 @@ terrain.uniforms = {
   uTexture: {value: terrain.texture.instance},
   uTextureFrequency: {value: 10},
   uElevation: {value: 2},
-  uTime: {value: 0}
+  uTime: {value: 0},
+  uHslHue: {value: 0.25},
+  uHslHueOffset: {value: 0.6},
+  uHslHueFrequency: {value: 20.0},
+  uHslLightness: {value: 0.75},
+  uHslLightnessVariation: {value: 0.25},
+  uHslLightnessFrequency: {value: 20.0}
 }
 
 terrain.geometry = new THREE.PlaneBufferGeometry(1, 1, 1000, 1000)
@@ -311,6 +317,66 @@ const addGui = () => {
     max: 50,
     step: 1,
   })
+
+  gui.Register({
+    object: terrain.uniforms.uHslHue,
+    property: 'value',
+    type: 'range',
+    label: 'uHslHue',
+    min: 0,
+    max: 1,
+    step: 0.001,
+  })
+
+  gui.Register({
+    object: terrain.uniforms.uHslHueOffset,
+    property: 'value',
+    type: 'range',
+    label: 'uHslHueOffset',
+    min: 0,
+    max: 1,
+    step: 0.001,
+  })
+
+  gui.Register({
+      object: terrain.uniforms.uHslHueFrequency,
+      property: 'value',
+      type: 'range',
+      label: 'uHslHueFrequency',
+      min: 0,
+      max: 50,
+      step: 0.01,
+    })
+
+  gui.Register({
+    object: terrain.uniforms.uHslLightness,
+    property: 'value',
+    type: 'range',
+    label: 'uHslLightness',
+    min: 0,
+    max: 1,
+    step: 0.001,
+  })
+
+  gui.Register({
+    object: terrain.uniforms.uHslLightnessVariation,
+    property: 'value',
+    type: 'range',
+    label: 'uHslLightnessVariation',
+    min: 0,
+    max: 1,
+    step: 0.001,
+  })
+
+  gui.Register({
+      object: terrain.uniforms.uHslLightnessFrequency,
+      property: 'value',
+      type: 'range',
+      label: 'uHslLightnessFrequency',
+      min: 0,
+      max: 50,
+      step: 0.001,
+    })
 
   gui.Register({
     type: 'folder',
