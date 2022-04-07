@@ -75,6 +75,12 @@ void main() {
 //    float alpha = mod(vElevation * 10.0, 1.0);
 //    alpha = step(0.95, alpha);
 
+    float fadeSideAmplitude = 0.2;
+    float sideAlpha = 1.0 - max(
+        smoothstep(0.5 - fadeSideAmplitude, 0.5, abs(vUv.x - 0.5)),
+        smoothstep(0.5 - fadeSideAmplitude, 0.5, abs(vUv.y - 0.5))
+    );
+
     vec3 color = mix(rainbowColor, uColor, textureColor.r);
-    gl_FragColor = vec4(color, textureColor.a);
+    gl_FragColor = vec4(color, textureColor.a * sideAlpha);
 }
