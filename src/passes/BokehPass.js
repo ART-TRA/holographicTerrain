@@ -89,20 +89,15 @@ class BokehPass extends Pass {
     // Render depth into texture
     // this.scene.overrideMaterial = this.materialDepth;
 
-    this.scene.traverse(_child =>
-    {
-      if(_child instanceof Mesh)
-      {
-        if(typeof _child.userData.noBokeh === 'undefined')
-        {
+    this.scene.traverse(_child => {
+      if(_child instanceof Mesh) {
+        if(typeof _child.userData.noBokeh === 'undefined') {
           _child.userData.originalMaterial = _child.material
 
-          if(_child.userData.depthMaterial)
-          {
+          if(_child.userData.depthMaterial) {
             _child.material = _child.userData.depthMaterial
           }
-          else
-          {
+          else {
             _child.material = this.materialDepth
           }
         }
@@ -140,12 +135,9 @@ class BokehPass extends Pass {
     }
 
     // this.scene.overrideMaterial = null;
-    this.scene.traverse(_child =>
-    {
-      if(_child instanceof Mesh)
-      {
-        if(typeof _child.userData.noBokeh === 'undefined')
-        {
+    this.scene.traverse(_child => {
+      if(_child instanceof Mesh) {
+        if(typeof _child.userData.noBokeh === 'undefined') {
           _child.material = _child.userData.originalMaterial
         }
       }

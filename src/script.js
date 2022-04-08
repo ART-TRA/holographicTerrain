@@ -19,6 +19,8 @@ import vertexShader from './shaders/terrain/vertex.glsl'
 import fragmentShader from './shaders/terrain/fragment.glsl'
 import depthVertexShader from './shaders/depth/vertex.glsl'
 import depthFragmentShader from './shaders/depth/fragment.glsl'
+import vignetteVertexShader from './shaders/vignette/vertex.glsl'
+import vignetteFragmentShader from './shaders/vignette/fragment.glsl'
 
 let mouse = new THREE.Vector2(0, 0)
 const clock = new Clock()
@@ -126,6 +128,7 @@ const terrain = {}
 
 //texture
 terrain.texture = {}
+terrain.texture.visible = false
 terrain.texture.linesCount = 5
 terrain.texture.width = 32
 terrain.texture.height = 128
@@ -139,7 +142,10 @@ terrain.texture.canvas.style.position = 'fixed'
 terrain.texture.canvas.style.top = 0
 terrain.texture.canvas.style.left = 0
 terrain.texture.canvas.style.zIndex = 1
-document.body.append(terrain.texture.canvas)
+
+if (terrain.texture.visible) {
+	document.body.append(terrain.texture.canvas)
+}
 
 terrain.texture.context = terrain.texture.canvas.getContext('2d')
 
@@ -251,6 +257,19 @@ terrain.mesh.scale.set(10, 10, 10)
 terrain.mesh.userData.depthMaterial = terrain.depthMaterial
 scene.add(terrain.mesh)
 
+const vignette = {}
+vignette.geometry = new THREE.PlaneBufferGeometry(2,2)
+vignette.material = new THREE.ShaderMaterial({
+	fragmentShader: vignetteFragmentShader,
+	vertexShader: vignetteVertexShader,
+	transparent: true,
+	depthTest: false
+})
+vignette.mesh = new THREE.Mesh(vignette.geometry, vignette.material)
+vignette.mesh.userData.noBokeh = true
+vignette.mesh.frustumCulled = false
+scene.add(vignette.mesh)
+
 // GUI
 // -----------------------------------------------------------
 
@@ -264,6 +283,22 @@ const addGui = () => {
 		max: 10,
 		step: 1,
 		onChange: terrain.texture.update
+	})
+
+	//превью линий в левом углу экрана
+	gui.Register({
+		// folder: 'terrainTexture',
+		object: terrain.texture,
+		property: 'visible',
+		type: 'checkbox',
+		label: 'visible',
+		onChange: () => {
+			if (terrain.texture.visible) {
+				document.body.append(terrain.texture.canvas)
+			} else {
+				document.body.removeChild(terrain.texture.canvas)
+			}
+		}
 	})
 
 	gui.Register({
