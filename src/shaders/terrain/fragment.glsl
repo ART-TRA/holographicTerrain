@@ -1,5 +1,6 @@
 uniform sampler2D uTexture;
 uniform float uTextureFrequency;
+uniform float uTextureOffset;
 
 uniform float uTime;
 uniform float uHslHue; // 1.0
@@ -29,7 +30,7 @@ vec3 getRainbowColor() {
 void main() {
     vec3 uColor = vec3(1.0, 1.0, 1.0);
     vec3 rainbowColor = getRainbowColor();
-    vec4 textureColor = texture2D(uTexture, vec2(0.0, vElevation * uTextureFrequency)); // vElevation - кол-во уровней (кол-во линий)
+    vec4 textureColor = texture2D(uTexture, vec2(0.0, vElevation * uTextureFrequency + uTextureOffset)); // vElevation - кол-во уровней (кол-во линий)
 
 //    float alpha = mod(vElevation * 10.0, 1.0);
 //    alpha = step(0.95, alpha);
