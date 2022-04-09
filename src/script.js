@@ -49,10 +49,12 @@ const camera = new THREE.PerspectiveCamera(
   0.01,
   1000
 )
+camera.rotation.reorder('YXZ')
 camera.position.set(0, 1, 2)
 scene.add(camera)
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true //плавность вращения камеры
+
+const orbitControls = new OrbitControls(camera, canvas)
+orbitControls.enableDamping = true //плавность вращения камеры
 
 const renderer = new THREE.WebGLRenderer({
   canvas: canvas
@@ -200,7 +202,7 @@ terrain.uniforms = {
   uElevationGeneral: {value: 0.5},
   uElevationGeneralFrequency: {value: 0.3},
   uElevationDetails: {value: 0.2},
-  uElevationDetailsFrequency: {value: 1.0},
+  uElevationDetailsFrequency: {value: 1.2},
 
   uHslHue: {value: 0.25},
   uHslHueOffset: {value: 0.6},
@@ -269,8 +271,8 @@ vignette.material = new THREE.ShaderMaterial({
   depthTest: false,
   uniforms: {
     uColor: {value: vignette.color.instance},
-    uOffset: {value: -0.165},
-    uMultiplier: {value: 1.16}
+    uOffset: {value: -0.176},
+    uMultiplier: {value: 0.82}
   }
 })
 vignette.mesh = new THREE.Mesh(vignette.geometry, vignette.material)
@@ -278,11 +280,55 @@ vignette.mesh.userData.noBokeh = true
 vignette.mesh.frustumCulled = false
 scene.add(vignette.mesh)
 
+// VIEWS
+// ----------------------------------------------------------------------
+const view = {}
+view.settings = [
+  {
+    position: {x: -0.0, y: 3.124, z: -0.3},
+    rotation: {x: -1.489, y: -Math.PI, z: 0},
+    focus: 2.14
+  },
+  {
+    position: {x: 2.36, y: 1.12, z: -1.43},
+    rotation: {x: -0.385, y: 2.115, z: 0},
+    focus: 2.14
+  },
+  {
+    position: {x: -0.411, y: 1.156, z: -2.713},
+    rotation: {x: -0.398, y: -2.99, z: -7.53},
+    focus: 2.14
+  },
+  {
+    position: {x: -2.963, y: 0.28, z: 0.03},
+    rotation: {x: -0.09, y: -1.55, z: 0},
+    focus: 2.2
+  },
+]
+
+view.change = (_index) => {
+  const viewSettings = view.settings[_index]
+  camera.position.copy(viewSettings.position)
+  camera.rotation.x = viewSettings.rotation.x
+  camera.rotation.y = viewSettings.rotation.y
+  bokehPass.materialBokeh.uniforms.focus.value = viewSettings.focus
+}
+view.change(3)
+
+window.camera = camera
+
 // GUI
 // -----------------------------------------------------------
 
 const addGui = () => {
   gui.Register({
+    type: 'folder',
+    label: 'allSettings',
+    open: false
+  })
+
+  gui.Register({
+    folder: 'allSettings',
     object: terrain.texture,
     property: 'linesCount',
     type: 'range',
@@ -294,6 +340,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: vignette.color,
     property: 'value',
     type: 'color',
@@ -305,6 +352,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: vignette.material.uniforms.uOffset,
     property: 'value',
     type: 'range',
@@ -315,6 +363,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: vignette.material.uniforms.uMultiplier,
     property: 'value',
     type: 'range',
@@ -326,7 +375,7 @@ const addGui = () => {
 
   //превью линий в левом углу экрана
   gui.Register({
-    // folder: 'terrainTexture',
+    folder: 'allSettings',
     object: terrain.texture,
     property: 'visible',
     type: 'checkbox',
@@ -341,6 +390,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.texture,
     property: 'strongLineWidth',
     type: 'range',
@@ -352,6 +402,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.texture,
     property: 'thinLineWidth',
     type: 'range',
@@ -363,6 +414,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.texture,
     property: 'thinLineAlpha',
     type: 'range',
@@ -374,6 +426,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: guiDummy,
     property: 'clearColor',
     type: 'color',
@@ -383,6 +436,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uElevation,
     property: 'value',
     type: 'range',
@@ -393,6 +447,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uElevationValley,
     property: 'value',
     type: 'range',
@@ -403,6 +458,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uElevationValleyFrequency,
     property: 'value',
     type: 'range',
@@ -413,6 +469,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uElevationGeneral,
     property: 'value',
     type: 'range',
@@ -423,6 +480,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uElevationDetails,
     property: 'value',
     type: 'range',
@@ -433,6 +491,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uElevationDetailsFrequency,
     property: 'value',
     type: 'range',
@@ -443,6 +502,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uElevationGeneralFrequency,
     property: 'value',
     type: 'range',
@@ -453,6 +513,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'allSettings',
     object: terrain.uniforms.uTextureOffset,
     property: 'value',
     type: 'range',
@@ -463,6 +524,13 @@ const addGui = () => {
   })
 
   gui.Register({
+    type: 'folder',
+    label: 'uHsl',
+    open: false
+  })
+
+  gui.Register({
+    folder: 'uHsl',
     object: terrain.uniforms.uHslHue,
     property: 'value',
     type: 'range',
@@ -473,6 +541,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'uHsl',
     object: terrain.uniforms.uHslHueOffset,
     property: 'value',
     type: 'range',
@@ -483,6 +552,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'uHsl',
     object: terrain.uniforms.uHslHueFrequency,
     property: 'value',
     type: 'range',
@@ -493,6 +563,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'uHsl',
     object: terrain.uniforms.uHslLightness,
     property: 'value',
     type: 'range',
@@ -503,6 +574,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'uHsl',
     object: terrain.uniforms.uHslLightnessVariation,
     property: 'value',
     type: 'range',
@@ -513,6 +585,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'uHsl',
     object: terrain.uniforms.uHslLightnessFrequency,
     property: 'value',
     type: 'range',
@@ -523,6 +596,7 @@ const addGui = () => {
   })
 
   gui.Register({
+    folder: 'uHsl',
     object: terrain.uniforms.uHslTimeFrequency,
     property: 'value',
     type: 'range',
@@ -535,7 +609,7 @@ const addGui = () => {
   gui.Register({
     type: 'folder',
     label: 'bokehPass',
-    open: true
+    open: false
   })
 
   //дальность фокусировки
@@ -583,6 +657,23 @@ const addGui = () => {
     label: 'enabled',
   })
 
+  gui.Register({
+    type: 'folder',
+    label: 'views',
+    open: true
+  })
+
+  for (const _settingsIndex in view.settings) {
+    gui.Register({
+      type: 'button',
+      label: `change${_settingsIndex}`,
+      action: () => {
+        view.change(_settingsIndex)
+      }
+    })
+  }
+
+
 }
 addGui()
 
@@ -593,7 +684,7 @@ const tick = () => {
   terrain.uniforms.uTime.value = elapsedTime
 
   //Update controls
-  controls.update() //если включён Damping для камеры необходимо её обновлять в каждом кадре
+  orbitControls.update() //если включён Damping для камеры необходимо её обновлять в каждом кадре
 
   // renderer.render(scene, camera)
   effectComposer.render()
