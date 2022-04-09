@@ -1,6 +1,11 @@
+uniform vec3 uColor;
+uniform float uOffset;
+uniform float uMultiplier;
+
 varying vec2 vUv;
 
 void main() {
-  float distanceToCenter = length(vUv - 0.5);
-  gl_FragColor = vec4(vUv, 1.0, distanceToCenter);
+  float distanceToCenter = smoothstep(0.0, 1.0, length(vUv - 0.5));
+  float alpha = distanceToCenter * uMultiplier + uOffset;
+  gl_FragColor = vec4(uColor, alpha);
 }
