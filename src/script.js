@@ -54,6 +54,7 @@ camera.position.set(0, 1, 2)
 scene.add(camera)
 
 const orbitControls = new OrbitControls(camera, canvas)
+orbitControls.enabled = false
 orbitControls.enableDamping = true //плавность вращения камеры
 
 const renderer = new THREE.WebGLRenderer({
@@ -90,8 +91,8 @@ window.addEventListener('resize', () => {
 
 window.addEventListener('mousemove', (event) => {
   mouse = {
-    x: event.clientX / window.innerWidth - 0.5,
-    y: event.clientY / window.innerHeight - 0.5,
+    x: event.clientX / sizes.width - 0.5,
+    y: event.clientY / sizes.height - 0.5,
   }
 })
 
@@ -313,7 +314,7 @@ view.change = (_index) => {
   camera.rotation.y = viewSettings.rotation.y
   bokehPass.materialBokeh.uniforms.focus.value = viewSettings.focus
 }
-view.change(3)
+view.change(0)
 
 window.camera = camera
 
