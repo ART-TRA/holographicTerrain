@@ -20,8 +20,8 @@ import vertexShader from './shaders/terrain/vertex.glsl'
 import fragmentShader from './shaders/terrain/fragment.glsl'
 import depthVertexShader from './shaders/depth/vertex.glsl'
 import depthFragmentShader from './shaders/depth/fragment.glsl'
-import vignetteVertexShader from './shaders/vignette/vertex.glsl'
-import vignetteFragmentShader from './shaders/vignette/fragment.glsl'
+import overlayVertexShader from './shaders/overlay/vertex.glsl'
+import overlayFragmentShader from './shaders/overlay/fragment.glsl'
 
 let mouse = new THREE.Vector2(0, 0)
 const clock = new Clock()
@@ -60,7 +60,7 @@ camera.instance.rotation.reorder('YXZ')
 scene.add(camera.instance)
 
 const orbitControls = new OrbitControls(camera.instance, canvas)
-orbitControls.enabled = false
+// orbitControls.enabled = false
 orbitControls.enableDamping = true //плавность вращения камеры
 
 const renderer = new THREE.WebGLRenderer({
@@ -259,30 +259,51 @@ terrain.mesh.scale.set(10, 10, 10)
 terrain.mesh.userData.depthMaterial = terrain.depthMaterial
 scene.add(terrain.mesh)
 
-const vignette = {}
-vignette.color = {}
-vignette.color.value = '#00d9ff'
-vignette.color.instance = new THREE.Color(vignette.color.value)
-vignette.geometry = new THREE.PlaneBufferGeometry(2, 2)
-vignette.material = new THREE.ShaderMaterial({
-  fragmentShader: vignetteFragmentShader,
-  vertexShader: vignetteVertexShader,
+//OVERLAY
+// -----------------------------------------------------------------------------------------
+const overlay = {}
+
+overlay.vignetteColor = {}
+overlay.vignetteColor.value = '#00d9ff'
+overlay.vignetteColor.instance = new THREE.Color(overlay.vignetteColor.value)
+
+overlay.overlayColor = {}
+overlay.overlayColor.value = '#000000'
+overlay.overlayColor.instance = new THREE.Color(overlay.overlayColor.value)
+
+overlay.geometry = new THREE.PlaneBufferGeometry(2, 2)
+overlay.material = new THREE.ShaderMaterial({
+  fragmentShader: overlayFragmentShader,
+  vertexShader: overlayVertexShader,
   transparent: true,
   depthTest: false,
   uniforms: {
-    uColor: {value: vignette.color.instance},
-    uOffset: {value: -0.176},
-    uMultiplier: {value: 0.82}
+    uVignetteColor: {value: overlay.vignetteColor.instance},
+    uVignetteOffset: {value: -0.176},
+    uVignetteMultiplier: {value: 0.82},
+
+    uOverlayColor: {value: overlay.overlayColor.instance},
+    uOverlayAlpha: {value: 1.0}
   }
 })
-vignette.mesh = new THREE.Mesh(vignette.geometry, vignette.material)
-vignette.mesh.userData.noBokeh = true
-vignette.mesh.frustumCulled = false
-scene.add(vignette.mesh)
+overlay.mesh = new THREE.Mesh(overlay.geometry, overlay.material)
+overlay.mesh.userData.noBokeh = true
+overlay.mesh.frustumCulled = false
+scene.add(overlay.mesh)
+
+window.requestAnimationFrame(() => {
+  gsap.to(overlay.material.uniforms.uOverlayAlpha, {
+    duration: 3,
+    value: 0,
+    delay: 0.4,
+    ease: 'power2.out',
+  })
+})
 
 // VIEWS
 // ----------------------------------------------------------------------
 const view = {}
+view.index = 0
 view.settings = [
   {
     position: {x: -0.0, y: 3.124, z: -0.3},
@@ -310,7 +331,7 @@ view.settings = [
   },
 ]
 
-view.current = null
+view.current = view.settings[view.index]
 // window.camera = camera.instance
 
 // PARALLAX
@@ -335,22 +356,49 @@ window.addEventListener('mousemove', (event) => {
   view.parallax.target.y = -(event.clientY / sizes.height - 0.5) * view.parallax.multiplier
 })
 
-view.change = (_index) => {
-  const viewSettings = view.settings[_index]
-  camera.position.copy(viewSettings.position)
-  camera.rotation.x = viewSettings.rotation.x
-  camera.rotation.y = viewSettings.rotation.y
-  bokehPass.materialBokeh.uniforms.focus.value = viewSettings.focus
-  view.parallax.multiplier = viewSettings.parallaxMultiplier
-  view.current = viewSettings
+view.apply = () => {
+  camera.position.copy(view.current.position)
+  camera.rotation.x = view.current.rotation.x
+  camera.rotation.y = view.current.rotation.y
+  bokehPass.materialBokeh.uniforms.focus.value = view.current.focus
+  view.parallax.multiplier = view.current.parallaxMultiplier
 }
-view.change(0)
+
+view.change = (_index) => {
+  view.index = _index
+  view.current = view.settings[_index]
+
+  gsap.to(overlay.material.uniforms.uOverlayAlpha, {
+    duration: 1.25,
+    value: 1,
+    delay: 0.4,
+    ease: 'power2.inOut',
+    onComplete: () => {
+      view.apply()
+
+      gsap.to(overlay.material.uniforms.uOverlayAlpha, {
+        duration: 1,
+        value: 0,
+        delay: 0.4,
+        ease: 'power2.inOut',
+      })
+    }
+  })
+}
+
+view.apply()
+
+window.setInterval(() => {
+  view.index += 1
+  if (view.index > 3) view.index = 0
+  view.change(view.index)
+}, 7500)
 
 const changeFocus = () => {
   gsap.to(
     bokehPass.materialBokeh.uniforms.focus, {
     duration: 0.5 + Math.random() * 3,
-    delay: 0.5 + Math.random() * 1,
+    delay: 0.5 + Math.random(),
     ease: 'power2.inOut',
     onComplete: changeFocus,
     value: view.current.focus + Math.random() - 0.2
@@ -379,6 +427,69 @@ const addGui = () => {
 
   gui.Register({
     type: 'folder',
+    label: 'overlay',
+    open: false
+  })
+
+  gui.Register({
+    folder: 'overlay',
+    object: overlay.vignetteColor,
+    property: 'value',
+    type: 'color',
+    label: 'vignetteColor',
+    format: 'hex',
+    onChange: () => {
+      overlay.vignetteColor.instance.set(overlay.vignetteColor.value)
+    }
+  })
+
+  gui.Register({
+    folder: 'overlay',
+    object: overlay.material.uniforms.uVignetteOffset,
+    property: 'value',
+    type: 'range',
+    label: 'vignetteOffset',
+    min: -2,
+    max: 2,
+    step: 0.001
+  })
+
+  gui.Register({
+    folder: 'overlay',
+    object: overlay.material.uniforms.uVignetteMultiplier,
+    property: 'value',
+    type: 'range',
+    label: 'vignetteMultiplier',
+    min: 0,
+    max: 5,
+    step: 0.001
+  })
+
+  gui.Register({
+    folder: 'overlay',
+    object: overlay.overlayColor,
+    property: 'value',
+    type: 'color',
+    label: 'overlayColor',
+    format: 'hex',
+    onChange: () => {
+      overlay.overlayColor.instance.set(overlay.overlayColor.value)
+    }
+  })
+
+  gui.Register({
+    folder: 'overlay',
+    object: overlay.material.uniforms.uOverlayAlpha,
+    property: 'value',
+    type: 'range',
+    label: 'overlayAlpha',
+    min: 0,
+    max: 1,
+    step: 0.001
+  })
+
+  gui.Register({
+    type: 'folder',
     label: 'allSettings',
     open: false
   })
@@ -393,40 +504,6 @@ const addGui = () => {
     max: 10,
     step: 1,
     onChange: terrain.texture.update
-  })
-
-  gui.Register({
-    folder: 'allSettings',
-    object: vignette.color,
-    property: 'value',
-    type: 'color',
-    label: 'backColor',
-    format: 'hex',
-    onChange: () => {
-      vignette.color.instance.set(vignette.color.value)
-    }
-  })
-
-  gui.Register({
-    folder: 'allSettings',
-    object: vignette.material.uniforms.uOffset,
-    property: 'value',
-    type: 'range',
-    label: 'uOffset',
-    min: -2,
-    max: 2,
-    step: 0.001
-  })
-
-  gui.Register({
-    folder: 'allSettings',
-    object: vignette.material.uniforms.uMultiplier,
-    property: 'value',
-    type: 'range',
-    label: 'uMultiplier',
-    min: 0,
-    max: 5,
-    step: 0.001
   })
 
   //превью линий в левом углу экрана
@@ -742,7 +819,9 @@ const tick = () => {
   terrain.uniforms.uTime.value = elapsedTime
 
   //Update controls
-  orbitControls.update() //если включён Damping для камеры необходимо её обновлять в каждом кадре
+  if (orbitControls.enabled) {
+    orbitControls.update() //если включён Damping для камеры необходимо её обновлять в каждом кадре
+  }
 
   camera.instance.position.copy(camera.position)
 
