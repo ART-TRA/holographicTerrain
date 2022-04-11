@@ -41,19 +41,24 @@ const sizes = {
   pixelRatio: Math.min(window.devicePixelRatio, 2)
 }
 
+const camera = {}
+camera.position = new THREE.Vector3()
+camera.rotation = new THREE.Euler()
+camera.rotation.reorder('YXZ')
+
 const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(
+camera.instance = new THREE.PerspectiveCamera(
   75,
   sizes.width / sizes.height,
   0.01,
   1000
 )
-camera.rotation.reorder('YXZ')
-camera.position.set(0, 1, 2)
-scene.add(camera)
+camera.instance.rotation.reorder('YXZ')
+// camera.instance.position.set(0, 1, 2)
+scene.add(camera.instance)
 
-const orbitControls = new OrbitControls(camera, canvas)
+const orbitControls = new OrbitControls(camera.instance, canvas)
 orbitControls.enabled = false
 orbitControls.enableDamping = true //плавность вращения камеры
 
@@ -73,8 +78,8 @@ window.addEventListener('resize', () => {
   sizes.pixelRatio = Math.min(window.devicePixelRatio, 2)
 
   //update camera
-  camera.aspect = sizes.width / sizes.height
-  camera.updateProjectionMatrix()
+  camera.instance.aspect = sizes.width / sizes.height
+  camera.instance.updateProjectionMatrix()
 
   //update renderer
   renderer.setSize(sizes.width, sizes.height)
@@ -89,13 +94,6 @@ window.addEventListener('resize', () => {
   bokehPass.renderTargetDepth.height = sizes.height * sizes.pixelRatio
 })
 
-window.addEventListener('mousemove', (event) => {
-  mouse = {
-    x: event.clientX / sizes.width - 0.5,
-    y: event.clientY / sizes.height - 0.5,
-  }
-})
-
 const renderTarget = new WebGLMultisampleRenderTarget(
   800,
   600,
@@ -107,10 +105,10 @@ const renderTarget = new WebGLMultisampleRenderTarget(
   }
 )
 const effectComposer = new EffectComposer(renderer)
-const renderPass = new RenderPass(scene, camera)
+const renderPass = new RenderPass(scene, camera.instance)
 const bokehPass = new BokehPass(
   scene,
-  camera,
+  camera.instance,
   {
     focus: 1.0,
     aperture: 0.002,
@@ -288,22 +286,26 @@ view.settings = [
   {
     position: {x: -0.0, y: 3.124, z: -0.3},
     rotation: {x: -1.489, y: -Math.PI, z: 0},
-    focus: 2.14
+    focus: 2.14,
+    parallaxMultiplier: 0.25
   },
   {
     position: {x: 2.36, y: 1.12, z: -1.43},
     rotation: {x: -0.385, y: 2.115, z: 0},
-    focus: 2.14
+    focus: 2.14,
+    parallaxMultiplier: 0.2
   },
   {
     position: {x: -0.411, y: 1.156, z: -2.713},
     rotation: {x: -0.398, y: -2.99, z: -7.53},
-    focus: 2.14
+    focus: 2.14,
+    parallaxMultiplier: 0.15
   },
   {
     position: {x: -2.963, y: 0.28, z: 0.03},
     rotation: {x: -0.09, y: -1.55, z: 0},
-    focus: 2.2
+    focus: 2.2,
+    parallaxMultiplier: 0.15
   },
 ]
 
@@ -313,15 +315,52 @@ view.change = (_index) => {
   camera.rotation.x = viewSettings.rotation.x
   camera.rotation.y = viewSettings.rotation.y
   bokehPass.materialBokeh.uniforms.focus.value = viewSettings.focus
+  view.parallax.multiplier = viewSettings.parallaxMultiplier
 }
 view.change(0)
 
-window.camera = camera
+// window.camera = camera.instance
+
+// PARALLAX
+// ----------------------------------------------------------------------
+view.parallax = {}
+view.parallax.target = {}
+view.parallax.target.x = 0
+view.parallax.target.y = 0
+view.parallax.eased = {}
+view.parallax.eased.x = 0
+view.parallax.eased.y = 0
+view.parallax.eased.multiplier = 4
+view.parallax.multiplier = 0.25
+
+window.addEventListener('mousemove', (event) => {
+  mouse = {
+    x: event.clientX / sizes.width - 0.5,
+    y: event.clientY / sizes.height - 0.5,
+  }
+
+  view.parallax.target.x = (event.clientX / sizes.width - 0.5) * view.parallax.multiplier
+  view.parallax.target.y = -(event.clientY / sizes.height - 0.5) * view.parallax.multiplier
+})
 
 // GUI
 // -----------------------------------------------------------
 
 const addGui = () => {
+  gui.Register({
+    type: 'folder',
+    label: 'camera',
+    open: false
+  })
+
+  gui.Register({
+    folder: 'camera',
+    object: orbitControls,
+    property: 'enabled',
+    type: 'checkbox',
+    label: 'orbitControls'
+  })
+
   gui.Register({
     type: 'folder',
     label: 'allSettings',
@@ -679,15 +718,28 @@ const addGui = () => {
 addGui()
 
 //---------------------------------------------------------------------------------------------------------
-
+let lastElapsedTime = 0
 const tick = () => {
   const elapsedTime = clock.getElapsedTime()
+  const deltaTime = elapsedTime - lastElapsedTime
+  lastElapsedTime = elapsedTime
   terrain.uniforms.uTime.value = elapsedTime
 
   //Update controls
   orbitControls.update() //если включён Damping для камеры необходимо её обновлять в каждом кадре
 
-  // renderer.render(scene, camera)
+  camera.instance.position.copy(camera.position)
+
+  view.parallax.eased.x += (view.parallax.target.x - view.parallax.eased.x) * deltaTime * view.parallax.eased.multiplier
+  view.parallax.eased.y += (view.parallax.target.y - view.parallax.eased.y) * deltaTime * view.parallax.eased.multiplier
+
+  camera.instance.translateX(view.parallax.eased.x)
+  camera.instance.translateY(view.parallax.eased.y)
+
+  camera.instance.rotation.x = camera.rotation.x
+  camera.instance.rotation.y = camera.rotation.y
+
+  // renderer.render(scene, camera.instance)
   effectComposer.render()
   window.requestAnimationFrame(tick)
 }
