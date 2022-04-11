@@ -1,5 +1,6 @@
 import './style.css'
 import * as THREE from 'three'
+import gsap from 'gsap'
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import {
   Clock,
@@ -309,16 +310,7 @@ view.settings = [
   },
 ]
 
-view.change = (_index) => {
-  const viewSettings = view.settings[_index]
-  camera.position.copy(viewSettings.position)
-  camera.rotation.x = viewSettings.rotation.x
-  camera.rotation.y = viewSettings.rotation.y
-  bokehPass.materialBokeh.uniforms.focus.value = viewSettings.focus
-  view.parallax.multiplier = viewSettings.parallaxMultiplier
-}
-view.change(0)
-
+view.current = null
 // window.camera = camera.instance
 
 // PARALLAX
@@ -342,6 +334,30 @@ window.addEventListener('mousemove', (event) => {
   view.parallax.target.x = (event.clientX / sizes.width - 0.5) * view.parallax.multiplier
   view.parallax.target.y = -(event.clientY / sizes.height - 0.5) * view.parallax.multiplier
 })
+
+view.change = (_index) => {
+  const viewSettings = view.settings[_index]
+  camera.position.copy(viewSettings.position)
+  camera.rotation.x = viewSettings.rotation.x
+  camera.rotation.y = viewSettings.rotation.y
+  bokehPass.materialBokeh.uniforms.focus.value = viewSettings.focus
+  view.parallax.multiplier = viewSettings.parallaxMultiplier
+  view.current = viewSettings
+}
+view.change(0)
+
+const changeFocus = () => {
+  gsap.to(
+    bokehPass.materialBokeh.uniforms.focus, {
+    duration: 0.5 + Math.random() * 3,
+    delay: 0.5 + Math.random() * 1,
+    ease: 'power2.inOut',
+    onComplete: changeFocus,
+    value: view.current.focus + Math.random() - 0.2
+  })
+}
+
+changeFocus()
 
 // GUI
 // -----------------------------------------------------------
