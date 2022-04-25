@@ -1,7 +1,37 @@
+@font-face
+{
+    font-family: 'Ailerons';
+    src: url('./fonts/subset-Ailerons-Regular.woff2') format('woff2'),
+    url('./fonts/subset-Ailerons-Regular.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+}
+
 html, body {
     padding: 0;
     margin: 0;
     width: 100vw;
     height: 100vh;
-    /*overflow: hidden;*/
+    overflow: hidden;
+}
+
+.title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    color: #ffffff;
+    font-family: 'Ailerons', Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 10vh;
+    text-transform: uppercase;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
 }
